@@ -1,0 +1,9 @@
+{
+  "name": "echosub-root",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "install-all": "cd backend && npm install",
+    "server": "cd backend && npm start"
+  }
+}
