@@ -234,27 +234,40 @@ class UniversalEchoSub {
   startDetection() {
     const hostname = window.location.hostname;
     
-    // Aggressively hide native subtitles (Kill Switch)
-    const hideNative = () => {
-      const nativeSubs = [
-        '.ytp-caption-window-container', // YouTube
-        '.player-timedtext',             // Netflix
-        '.vjs-text-track-display',       // Video.js
-        '.jw-captions'                   // JW Player
-      ];
+    // --- Native Subtitle Kill Switch ---
+    // Using MutationObserver instead of setInterval for better performance
+    const nativeSubs = [
+      '.ytp-caption-window-container', // YouTube
+      '.player-timedtext',             // Netflix
+      '.vjs-text-track-display',       // Video.js
+      '.jw-captions',                  // JW Player
+      '.mejs-captions-container'       // Generic
+    ];
+
+    const hideNative = (targetNode = document.body) => {
       nativeSubs.forEach(selector => {
-        const el = document.querySelector(selector);
-        if (el && this.settings.enableSubtitles) {
-          el.style.opacity = '0';
-          el.style.pointerEvents = 'none';
-          el.style.visibility = 'hidden';
-        } else if (el) {
-          el.style.opacity = '1';
-          el.style.visibility = 'visible';
-        }
+        const elements = targetNode.querySelectorAll ? targetNode.querySelectorAll(selector) : [];
+        elements.forEach(el => {
+          if (this.settings.enableSubtitles) {
+            el.style.display = 'none';
+            el.style.opacity = '0';
+            el.style.visibility = 'hidden';
+            el.style.pointerEvents = 'none';
+          }
+        });
       });
     };
-    setInterval(hideNative, 500);
+
+    // Initial run
+    hideNative();
+
+    // Observe future additions
+    const killSwitchObserver = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        if (mutation.addedNodes.length) hideNative();
+      });
+    });
+    killSwitchObserver.observe(document.body, { childList: true, subtree: true });
 
     if (hostname.includes('youtube.com')) {
       this.initYouTube();
